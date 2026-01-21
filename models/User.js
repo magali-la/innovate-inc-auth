@@ -27,13 +27,11 @@ const userSchema = new mongoose.Schema({
 
 // add bcrypt to salt and hash user's password
 // Set up pre-save middleware to create password
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function () {
   if (this.isNew || this.isModified("password")) {
     const saltRounds = 10;
     this.password = await bcrypt.hash(this.password, saltRounds);
   }
- 
-  next();
 });
 
 const User = mongoose.model("User", userSchema);
