@@ -4,6 +4,7 @@ const express = require("express");
 const app = express()
 const mongoose = require("mongoose");
 const userRoutes = require("./routes/userRoutes.js");
+const bookmarkRoutes = require("./routes/bookmarkRoutes.js");
 
 // DATABASE
 // connect the database
@@ -22,6 +23,7 @@ app.use(express.json());
 
 // ROUTES
 app.use("/api/users", userRoutes);
+app.use("/api/bookmarks", bookmarkRoutes);
 
 // LISTENER - PORT
 const PORT = process.env.PORT;
