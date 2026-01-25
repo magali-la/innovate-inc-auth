@@ -25,6 +25,8 @@ db.on('disconnected', () => console.log('mongo disconnected'));
 // MIDDLEWARE
 // app needs to parse json data
 app.use(express.json());
+// middleware for authorization
+const authMiddleware = require("./utils/auth.js");
 
 // ROUTES - induces
 // Create - post route for regisering new users in database
@@ -84,6 +86,25 @@ app.post("/api/users/login", async (req, res) => {
         res.json({ token, user: payload });
 
     } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// protected route using token, return user profile with the token
+app.get("/api/users/me", authMiddleware, async (req, res) => {
+    try {
+        // if the auth middleware worked, the req user should exist, if it doesn't throw an error for non authenticated user
+        if (!req.user) {
+            return res.status(401).json({ message: "User not authenticated" });
+        }
+
+        // we shouldn't expose the password so remove this field for the user for easy display
+        const user = await User.findById(req.user._id).select("-password");
+
+        // return the user as a json object
+        res.json(user);
+    } catch (error) {
+        // catch any server errors
         res.status(500).json({ message: error.message });
     }
 });
