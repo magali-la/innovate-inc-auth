@@ -19,6 +19,28 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Index - get one by id
+router.get('/:id', async (req, res) => {
+    const bookmarkId = req.params.id;
+
+    try {
+        const bookmark = await Bookmark.findById(bookmarkId);
+
+        if (!bookmark) {
+            return res.status(404).json({ message: 'No bookmark found with this id' });
+        }
+
+        // Check user id
+        if (bookmark.user.toString() !== req.user._id) {
+            return res.status(403).json({ message: 'User is not authorized to view this bookmark' });
+        }
+
+        res.json(bookmark);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 // Delete - delete bookmark
 router.delete('/:id', async (req, res) => {
 	const bookmarkId = req.params.id
@@ -83,3 +105,5 @@ router.post("/", async (req, res) => {
         res.status(400).json({ message: error.message });
     }
 });
+
+module.exports = router;
