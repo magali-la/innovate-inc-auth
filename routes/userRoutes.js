@@ -8,6 +8,10 @@ const jwt = require("jsonwebtoken");
 const secret = process.env.JWT_SECRET;
 const expiration = '1h';
 
+// Passport.js
+const passport = require("passport");
+require("../config/passport.js");
+
 // middleware for authorization
 const authMiddleware = require("../utils/auth.js");
 
@@ -90,6 +94,25 @@ router.get("/me", authMiddleware, async (req, res) => {
         // catch any server errors
         res.status(500).json({ message: error.message });
     }
+});
+
+// GITHUB AUTH
+// login link for github and only ask for the email
+router.get("/auth/github", passport.authenticate('github', { scope: ['user:email'] }));
+
+// if user approves, go here
+router.get("/auth/github/callback", passport.authenticate('github', { failureRedirect: '/login', session: false }), (req, res) => {
+    const payload = { 
+        _id: req.user._id,
+        username: req.user.username,
+        email: req.user.email 
+    };
+    
+    // assign the token
+    const token = jwt.sign({ data: payload }, secret, { expiresIn: expiration });
+
+    // for testing since there isnt a frontend, just send a response
+    res.json({ token, user: payload });
 });
 
 module.exports = router;

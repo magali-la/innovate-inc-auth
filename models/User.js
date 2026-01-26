@@ -18,17 +18,25 @@ const userSchema = new mongoose.Schema({
         lowercase: true,
         match: [/.+\@.+\..+/, "Please enter a valid email address"]
     },
+    // password can't be required if the user logs in with github where a password field isn't shared. make a validator function that either takes the githubId as the password or the actual password if they login with email/password
     password: {
         type: String,
-        required: [true, "Password is required"],
-        minlength: 8
+        minlength: 8,
+        validate: {
+          validator: function(password) {
+            // if the user being created has a githubid in its req.body, then its coming from oauth and it's valid
+            // if no githubid then do a regular check if a password exists
+            return this.githubId || password;
+          }
+        }
     }
 });
 
 // add bcrypt to salt and hash user's password
 // Set up pre-save middleware to create password
 userSchema.pre("save", async function () {
-  if (this.isNew || this.isModified("password")) {
+  // github users wont have a password field so add a check for the password existing first to run the salting and hashing
+  if (this.password && (this.isNew || this.isModified("password"))) {
     const saltRounds = 10;
     this.password = await bcrypt.hash(this.password, saltRounds);
   }

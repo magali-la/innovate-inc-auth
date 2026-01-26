@@ -7,7 +7,7 @@ passport.use(
     {
       clientID: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
-      callbackURL: process.env.GITHUB_CALLBACK_URL, // e.g., 'http://localhost:3001/api/users/auth/github/callback'
+      callbackURL: process.env.GITHUB_CALLBACK_URL
     },
     // This is the "verify" callback
     async (accessToken, refreshToken, profile, done) => {
@@ -19,18 +19,21 @@ passport.use(
           // If user already exists, pass them to the next middleware
           return done(null, existingUser);
         }
+
+        // check if there's even an email, if the user has it private in their github settings it'll throw an undefined error, set a placeholder with data we can access for the database email field
+        const email = profile.emails && profile.emails.length > 0 ? profile.emails[0].value : `${profile.username}@github.com`;
  
         // If it's a new user, create a record in our database
         const newUser = new User({
           githubId: profile.id,
           username: profile.username,
-          email: profile.emails[0].value, // Some providers return an array of emails
+          email: email
         });
  
         await newUser.save();
         done(null, newUser);
-      } catch (err) {
-        done(err);
+      } catch (error) {
+        done(error);
       }
     }
   )
